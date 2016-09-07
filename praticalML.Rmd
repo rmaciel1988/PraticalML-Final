@@ -1,0 +1,167 @@
+---
+author: "Reinaldo Maciel"
+date: "7 de setembro de 2016"
+output: html_document
+---
+
+#Pratical Machine Learning Project
+
+##Course Project Assignment:
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+##Data Sources:
+
+The training and test data for this project are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+The original source of the data is: http://groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
+
+
+##The project Objective:
+
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases. 1. Your submission should consist of a link to a Github repo with your R markdown and compiled HTML file describing your analysis. Please constrain the text of the writeup to < 2000 words and the number of figures to be less than 5. It will make it easier for the graders if you submit a repo with a gh-pages branch so the HTML page can be viewed online (and you always want to make it easy on graders :-). 2. You should also apply your machine learning algorithm to the 20 test cases available in the test data above. Please submit your predictions in appropriate format to the programming assignment for automated grading. See the programming assignment for additional details.
+
+
+##Metodology:
+
+Our outcome variable is classe, a factor variable. For this data set, "participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in 5 different fashions: - exactly according to the specification (Class A) - throwing the elbows to the front (Class B) - lifting the dumbbell only halfway (Class C) - lowering the dumbbell only halfway (Class D) - throwing the hips to the front (Class E)
+
+Two models will be tested using decision tree and random forests, since they are nice algorithms for the prediction of class data. The model with the highest accuracy will be chosen as our final model.
+
+#### Cross-validation
+
+-- Subsampling our training data set randomly without replacement into 2 subsamples:
+   TrainTrainingSet 75% of the original Training dataset;
+   TestTrainingSet 25% of the original Training dataset;
+
+-- Models will be fitted on the TrainTrainingSet dataset;
+
+-- Models will be tested on the tested on the TestTrainingSet;
+
+-- The one with Highest accuracy will be tested on the original Testing data set.
+   
+
+#### Expected out-of-sample error
+
+The expected out-of-sample error will correspond to the quantity: 1-accuracy in the cross-validation data. Accuracy is the proportion of correct classified observation over the total sample in the TestTrainingSet data set. Expected accuracy is the expected accuracy in the out-of-sample data set (i.e. original testing data set). Thus, the expected value of the out-of-sample error will correspond to the expected number of missclassified observations/total observations in the Test data set, which is the quantity: 1-accuracy found from the cross-validation data set.
+
+Our outcome variable "classe" is a factor variable. We split the Training dataset into TrainTrainingSet and TestTrainingSet datasets.
+
+
+## Loading the Libraries:
+
+```{r}
+##install.packages(c("lattice","ggplot2","caret","randomForest","rpart","rpart.plot"))
+
+library("lattice")
+library("ggplot2")
+library("caret")
+library("randomForest")
+library("rpart")
+library("rpart.plot")
+```
+
+## Getting and Cleaning the Data:
+
+```{r}
+set.seed(1234)
+
+##data load
+
+urlTrain <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+urlTest <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+
+
+csvTrain <- "pml-training.csv"
+
+if (file.exists(csvTrain)) {
+        trainingset  <- read.csv(csvTrain, na.strings=c("NA","#DIV/0!",""))
+} else { 
+        download.file(urlTrain,csvTrain)
+        trainingset  <- read.csv(csvTrain, na.strings=c("NA","#DIV/0!",""))
+        }                           
+
+csvTest <-  "pml-testing.csv"
+
+if (file.exists(csvTest)) {
+        testingset  <- read.csv(csvTest, na.strings=c("NA","#DIV/0!",""))
+} else { 
+        download.file(urlTest,csvTest)
+        testingset  <- read.csv(csvTest, na.strings=c("NA","#DIV/0!",""))
+}   
+
+
+## Performing Exploratory Analisys over the datasets
+##dim(testingset)
+
+##dim(trainingset)
+
+##head(testingset)
+
+##head(trainingset)
+
+## Deleting columns with all missing values
+trainingset<-trainingset[,colSums(is.na(trainingset)) == 0]
+testingset <-testingset[,colSums(is.na(testingset)) == 0]
+
+# Delete variables are irrelevant to our current project: user_name, raw_timestamp_part_1, raw_timestamp_part_,2 cvtd_timestamp, new_window, and  num_window (columns 1 to 7). 
+trainingset   <-trainingset[,-c(1:7)]
+testingset <-testingset[,-c(1:7)]
+
+# partition the data so that 75% of the training dataset into training and the remaining 25% to testing
+traintrainset <- createDataPartition(y=trainingset$classe, p=0.75, list=FALSE)
+TrainTrainingSet <- trainingset[traintrainset, ] 
+TestTrainingSet <- trainingset[-traintrainset, ]
+
+```
+
+##Decision Trees:
+
+```{r}
+model1 <- rpart(classe ~ ., data=TrainTrainingSet, method="class")
+
+prediction1 <- predict(model1, TestTrainingSet, type = "class")
+
+# Plot the Decision Tree
+rpart.plot(model1, main="Classification Tree", extra=102, under=TRUE, faclen=0, cex = .6)
+
+```
+
+
+### Testing the results on TestTrainingSet
+```{r}
+
+confusionMatrix(prediction1, TestTrainingSet$classe)
+
+```
+
+##Random Forest:
+```{r}
+model2 <- randomForest(classe ~. , data=TrainTrainingSet, method="class")
+
+# Predicting:
+prediction2 <- predict(model2, TestTrainingSet, type = "class")
+
+# Test results on TestTrainingSet data set:
+confusionMatrix(prediction2, TestTrainingSet$classe)
+```
+
+
+## Which Prediction model to use?
+
+Random Forest algorithm performed better than Decision Trees. Accuracy for Random Forest model was 0.995 (95% CI: (0.993, 0.997)) compared to Decision Tree model with 0.739 (95% CI: (0.727, 0.752)). The Random Forests model is choosen. The expected out-of-sample error is estimated at 0.005, or 0.5%.
+
+
+##Submission
+
+The final outcome based on the Prediction Model 2 (Random Forest) applied against the Testing dataset
+```{r}
+# predict outcome levels on the original Testing data set using Random Forest algorithm
+predictfinal <- predict(model2, testingset, type="class")
+predictfinal
+```
+
