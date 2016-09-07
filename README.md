@@ -11,3 +11,8 @@ the graders if you submit a repo with a gh-pages branch so the HTML page can be 
 graders :-). You should also apply your machine learning algorithm to the 20 test cases available in the test data above. 
 Please submit your predictions in appropriate format to the programming assignment for automated grading. 
 See the programming assignment for additional details.
+
+
+If you are a Coursera graders, you may use this rendered url to check the report:
+
+http://htmlpreview.github.io/?https://github.com/rmaciel1988/PraticalML-Final/blob/master/praticalML.html
